@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.8",
+	"FriendlyName": "Serinc REST",
+	"Description": "",
+	"Category": "HTTP",
+	"CreatedBy": "",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "SREST",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
