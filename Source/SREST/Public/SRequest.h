@@ -128,5 +128,5 @@ public:
 	FSimpleDelegate OnCompleted;
 };
 
-typedef TSharedPtr<FSRequest> FDeRequestPtr;
-typedef TSharedRef<FSRequest> FDeRequestRef;
+typedef TSharedPtr<FSRequest> FSRequestPtr;
+typedef TSharedRef<FSRequest> FSRequestRef;

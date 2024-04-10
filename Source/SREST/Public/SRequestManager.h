@@ -10,7 +10,7 @@
 
 struct SREST_API FSProcessingRequest
 {
-	FDeRequestPtr DeRequest;
+	FSRequestPtr DeRequest;
 	FHttpRequestPtr Request;
 
 	bool operator==(const FSProcessingRequest& InR) const
@@ -28,8 +28,9 @@ public:
 
 	USRequestManager();
 
-	FDeRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VGET);
-	bool SendRequest(const FDeRequestRef& InRequest, const FString& InContent = "");
+	FSRequestRef CreateRequest(const FString& InMethod, const ESRequestType& InType = ESRequestType::VGET);
+	FSRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VGET);
+	bool SendRequest(const FSRequestRef& InRequest, const FString& InContent = "");
 
 	UFUNCTION(BlueprintCallable)
 	void SetEndpoint(const FString& InEndpoint);
@@ -62,7 +63,7 @@ protected:
 	
 	void OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully);
 
-	TArray<FDeRequestPtr> Requests;
+	TArray<FSRequestPtr> Requests;
 	TArray<FSProcessingRequest> ProcessingRequests;
 };
 

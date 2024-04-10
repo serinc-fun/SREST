@@ -12,9 +12,14 @@ USRequestManager::USRequestManager()
 	
 }
 
-FDeRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType)
+FSRequestRef USRequestManager::CreateRequest(const FString& InMethod, const ESRequestType& InType)
 {
-	FDeRequestRef LRequest = MakeShareable(new FSRequest(InOwner));
+	return CreateRequest(GetOuter(), InMethod, InType);
+}
+
+FSRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType)
+{
+	FSRequestRef LRequest = MakeShareable(new FSRequest(InOwner));
 	LRequest->Type = InType;
 	LRequest->Method = InMethod;
 	LRequest->ContentType = ESRequestContentType::Json;
@@ -23,7 +28,7 @@ FDeRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& I
 	return LRequest;
 }
 
-bool USRequestManager::SendRequest(const FDeRequestRef& InRequest, const FString& InContent)
+bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString& InContent)
 {
 	if (!Requests.Contains(InRequest))
 		return false;
