@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "NetworkGuid.generated.h"
 
-#if CPP      //noexport class
-
+USTRUCT(BlueprintType)
 struct SREST_API FNetworkGuid : public FGuid
 {
+	GENERATED_BODY()
+	
 	FNetworkGuid() : FGuid() {}
 	FNetworkGuid(const FGuid& InGuid) : FGuid(InGuid) {}
 
@@ -54,18 +55,6 @@ struct SREST_API FNetworkGuid : public FGuid
 	FString ToString(EGuidFormats Format = EGuidFormats::DigitsWithHyphens) const;
 	FGuid ToGuid() const;
 };
-
-#endif
-
-#if !CPP      //noexport class
-
-USTRUCT(noexport, BlueprintType)
-struct FNetworkGuid : public FGuid
-{
-
-};
-
-#endif
 
 template <> struct TIsPODType<FNetworkGuid> { enum { Value = true }; };
 
