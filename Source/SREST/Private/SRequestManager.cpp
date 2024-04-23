@@ -35,7 +35,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	
 	const bool LIsExist = ProcessingRequests.ContainsByPredicate([&](const FSProcessingRequest& InItem) -> bool
 	{
-		return InItem.DeRequest == InRequest;
+		return InItem.RequestPtr == InRequest;
 	});
 
 	if (LIsExist)
@@ -114,22 +114,22 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 {
 	const auto LLambda = [&](const FSProcessingRequest& InItem) -> bool
 	{
-		return InItem.Request == InRequest;
+		return InItem.SystemRequestPtr == InRequest;
 	};
 	
 	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
 
-	if (LFoundRequest && LFoundRequest->DeRequest.IsValid())
+	if (LFoundRequest && LFoundRequest->RequestPtr.IsValid())
 	{
 		const auto LCode = InResponse->GetResponseCode();
-		if (auto LFoundHandler = LFoundRequest->DeRequest->Handlers.Find(LCode))
+		if (auto LFoundHandler = LFoundRequest->RequestPtr->Handlers.Find(LCode))
 		{
 			const auto LRealHandler = (*LFoundHandler);
 			if (!LRealHandler->OnHandle(InResponse->GetContent()))
 			{
-				if (LFoundRequest->DeRequest->Error.IsValid())
+				if (LFoundRequest->RequestPtr->Error.IsValid())
 				{
-					StaticCastSharedPtr<FSHandlerErrorCallback>(LFoundRequest->DeRequest->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
+					StaticCastSharedPtr<FSHandlerErrorCallback>(LFoundRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 				}
 				
 				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
@@ -137,15 +137,15 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 		}
 		else
 		{
-			if (LFoundRequest->DeRequest->Error.IsValid())
+			if (LFoundRequest->RequestPtr->Error.IsValid())
 			{
-				StaticCastSharedPtr<FSHandlerErrorCallback>(LFoundRequest->DeRequest->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
+				StaticCastSharedPtr<FSHandlerErrorCallback>(LFoundRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 			}
 			
 			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
 		}
 		// ReSharper disable once CppExpressionWithoutSideEffects
-		LFoundRequest->DeRequest->OnCompleted.ExecuteIfBound();
+		LFoundRequest->RequestPtr->OnCompleted.ExecuteIfBound();
 	}
 
 	ProcessingRequests.RemoveAll(LLambda);

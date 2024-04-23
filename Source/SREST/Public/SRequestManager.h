@@ -10,12 +10,12 @@
 
 struct SREST_API FSProcessingRequest
 {
-	FSRequestPtr DeRequest;
-	FHttpRequestPtr Request;
+	FSRequestPtr RequestPtr;
+	FHttpRequestPtr SystemRequestPtr;
 
 	bool operator==(const FSProcessingRequest& InR) const
 	{
-		return InR.DeRequest == DeRequest && InR.Request == Request;
+		return InR.RequestPtr == RequestPtr && InR.SystemRequestPtr == SystemRequestPtr;
 	}
 };
 
