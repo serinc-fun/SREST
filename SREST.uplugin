@@ -18,6 +18,11 @@
 			"Name": "SREST",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "SRESTEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	]
 }
