@@ -121,8 +121,8 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 
 	if (LFoundRequest && LFoundRequest->RequestPtr.IsValid())
 	{
-		const auto LCode = InResponse->GetResponseCode();
-		if (auto LFoundHandler = LFoundRequest->RequestPtr->Handlers.Find(LCode))
+		const auto LCode = InResponse.IsValid() ? InResponse->GetResponseCode() : -5000;
+		if (const auto LFoundHandler = LFoundRequest->RequestPtr->Handlers.Find(LCode))
 		{
 			const auto LRealHandler = (*LFoundHandler);
 			if (!LRealHandler->OnHandle(InResponse->GetContent()))
