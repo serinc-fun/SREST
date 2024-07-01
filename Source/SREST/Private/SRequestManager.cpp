@@ -135,7 +135,7 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
 			}
 		}
-		else
+		else if (InResponse.IsValid())
 		{
 			if (LFoundRequest->RequestPtr->Error.IsValid())
 			{
