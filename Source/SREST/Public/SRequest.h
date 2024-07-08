@@ -84,7 +84,7 @@ public:
 
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
-	void SetDynamicMethod(const FStringFormatNamedArguments& InArguments);
+	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);
 	
 	FSHandlerCallback::FOnCallback& BindCallback(const int32& InCode)
 	{
