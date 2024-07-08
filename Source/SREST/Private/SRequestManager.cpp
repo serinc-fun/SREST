@@ -72,14 +72,14 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 
 	FString LURL = InRequest->DynamicMethod.Len() > 1 ? Endpoint + InRequest->DynamicMethod : Endpoint + InRequest->Method;
 
-	if (InRequest->Type == ESRequestType::VERB_GET)
+	if (InRequest->Type == ESRequestType::VERB_GET || InRequest->Type == ESRequestType::VERB_HEAD)
 	{
 		LURL.Append(InContent);
 	}
 	
 	LRequest->SetURL(LURL);
 	
-	if (InRequest->Type != ESRequestType::VERB_GET)
+	if (InRequest->Type != ESRequestType::VERB_GET && InRequest->Type != ESRequestType::VERB_HEAD)
 		LRequest->SetContentAsString(InContent);
 	
 	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
