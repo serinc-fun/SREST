@@ -41,7 +41,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	if (LIsExist)
 		return true;
 	
-	auto LRequest = FHttpModule::Get().CreateRequest();
+	const auto LRequest = FHttpModule::Get().CreateRequest();
 	switch (InRequest->Type)
 	{
 		case ESRequestType::VGET: LRequest->SetVerb(TEXT("GET")); break;
@@ -50,6 +50,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 		case ESRequestType::VDELETE: LRequest->SetVerb(TEXT("DELETE")); break;
 		default: ;
 	}
+	
 	switch (InRequest->ContentType)
 	{
 		case ESRequestContentType::Binary: LRequest->SetHeader(TEXT("Content-Type"), TEXT("application/octet-stream")); break;
@@ -63,9 +64,19 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	{
 		LToken = ISRestTokenInterface::Execute_GetRestToken(InRequest->Owner.Get());
 	}
+
+	FString LURL = InRequest->bCustomUrl ? InRequest->Method : Endpoint + InRequest->Method;
+
+	if (InRequest->Type == ESRequestType::VGET)
+	{
+		LURL.Append(InContent);
+	}
 	
-	LRequest->SetURL(InRequest->bCustomUrl ? InRequest->Method : Endpoint + InRequest->Method);
-	LRequest->SetContentAsString(InContent);
+	LRequest->SetURL(LURL);
+	
+	if (InRequest->Type != ESRequestType::VGET)
+		LRequest->SetContentAsString(InContent);
+	
 	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
 	LRequest->OnProcessRequestComplete().BindUObject(this, &USRequestManager::OnRequestCompleted);
 

@@ -59,13 +59,24 @@ public:
 	bool Send(const TUStruct& InStruct)
 	{
 		FString LString;
-		if (FJsonObjectConverter::UStructToJsonObjectString(InStruct, LString, 0, 0, 0, nullptr, false))
+
+		if (Type == ESRequestType::VGET)
 		{
+			LString = GetQueryHeaderFromUStruct(TUStruct::StaticStruct(), &InStruct);
 			return Send(LString);
+		}
+		else
+		{
+			if (FJsonObjectConverter::UStructToJsonObjectString(InStruct, LString, 0, 0, 0, nullptr, false))
+			{
+				return Send(LString);
+			}
 		}
 
 		return false;
 	}
+
+	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
 	void SetCustomUrl(const FString& InFullUrl)
 	{
