@@ -101,3 +101,8 @@ FString FSRequest::GetQueryHeaderFromUStruct(const UStruct* StructDefinition, co
 
 	return LRequest;
 }
+
+void FSRequest::SetDynamicMethod(const FStringFormatNamedArguments& InArguments)
+{
+	DynamicMethod = FString::Format(*Method, InArguments);
+}

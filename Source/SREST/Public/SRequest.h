@@ -35,7 +35,7 @@ struct SREST_API FSRequest : public TSharedFromThis<FSRequest>
 	ESRequestType						Type;
 	ESRequestContentType				ContentType;
 	FString								Method;
-	bool								bCustomUrl = false;
+	FString								DynamicMethod;
 
 protected:
 
@@ -78,11 +78,7 @@ public:
 
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
-	void SetCustomUrl(const FString& InFullUrl)
-	{
-		Method = InFullUrl;
-		bCustomUrl = true;
-	}
+	void SetDynamicMethod(const FStringFormatNamedArguments& InArguments);
 	
 	FSHandlerCallback::FOnCallback& BindCallback(const int32& InCode)
 	{

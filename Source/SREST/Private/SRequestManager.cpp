@@ -65,7 +65,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 		LToken = ISRestTokenInterface::Execute_GetRestToken(InRequest->Owner.Get());
 	}
 
-	FString LURL = InRequest->bCustomUrl ? InRequest->Method : Endpoint + InRequest->Method;
+	FString LURL = InRequest->DynamicMethod.Len() > 1 ? Endpoint + InRequest->DynamicMethod : Endpoint + InRequest->Method;
 
 	if (InRequest->Type == ESRequestType::VGET)
 	{
