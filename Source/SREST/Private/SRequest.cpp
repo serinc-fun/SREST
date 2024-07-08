@@ -12,7 +12,7 @@ FSRequest::FSRequest()
 }
 
 FSRequest::FSRequest(UObject* InOwner)
-	: Type(ESRequestType::VPOST)
+	: Type(ESRequestType::VERB_POST)
 	, ContentType(ESRequestContentType::Json)
 {
 	Owner = InOwner;

@@ -28,8 +28,8 @@ public:
 
 	USRequestManager();
 
-	FSRequestRef CreateRequest(const FString& InMethod, const ESRequestType& InType = ESRequestType::VGET);
-	FSRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VGET);
+	FSRequestRef CreateRequest(const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET);
+	FSRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET, const ESRequestContentType& InContentType = ESRequestContentType::Json);
 	bool SendRequest(const FSRequestRef& InRequest, const FString& InContent = "");
 
 	UFUNCTION(BlueprintCallable)
