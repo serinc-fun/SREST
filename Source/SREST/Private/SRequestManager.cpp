@@ -17,13 +17,13 @@ FSRequestRef USRequestManager::CreateRequest(const FString& InMethod, const ESRe
 	return CreateRequest(GetOuter(), InMethod, InType);
 }
 
-FSRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType)
+FSRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType/* = ESRequestType::VGET*/, const ESRequestContentType& InContentType/* = ESRequestContentType::Json*/)
 {
 	FSRequestRef LRequest = MakeShareable(new FSRequest(InOwner));
 	LRequest->Type = InType;
 	LRequest->Method = InMethod;
-	LRequest->ContentType = ESRequestContentType::Json;
-	LRequest->Manager = this;
+	LRequest->ContentType = InContentType;
+	LRequest->Manager = this;	
 	Requests.Add(LRequest);
 	return LRequest;
 }
@@ -41,15 +41,21 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	if (LIsExist)
 		return true;
 	
-	auto LRequest = FHttpModule::Get().CreateRequest();
+	const auto LRequest = FHttpModule::Get().CreateRequest();
 	switch (InRequest->Type)
 	{
-		case ESRequestType::VGET: LRequest->SetVerb(TEXT("GET")); break;
-		case ESRequestType::VPOST: LRequest->SetVerb(TEXT("POST")); break;
-		case ESRequestType::VPUT: LRequest->SetVerb(TEXT("PUT")); break;
-		case ESRequestType::VDELETE: LRequest->SetVerb(TEXT("DELETE")); break;
+		case ESRequestType::VERB_GET: LRequest->SetVerb(TEXT("GET")); break;
+		case ESRequestType::VERB_POST: LRequest->SetVerb(TEXT("POST")); break;
+		case ESRequestType::VERB_PUT: LRequest->SetVerb(TEXT("PUT")); break;
+		case ESRequestType::VERB_DELETE: LRequest->SetVerb(TEXT("DELETE")); break;
+		case ESRequestType::VERB_HEAD: LRequest->SetVerb(TEXT("HEAD")); break;
+		case ESRequestType::VERB_CONNECT: LRequest->SetVerb(TEXT("CONNECT")); break;
+		case ESRequestType::VERB_OPTIONS: LRequest->SetVerb(TEXT("OPTIONS")); break;
+		case ESRequestType::VERB_TRACE: LRequest->SetVerb(TEXT("TRACE")); break;
+		case ESRequestType::VERB_PATCH: LRequest->SetVerb(TEXT("PATCH")); break;
 		default: ;
 	}
+	
 	switch (InRequest->ContentType)
 	{
 		case ESRequestContentType::Binary: LRequest->SetHeader(TEXT("Content-Type"), TEXT("application/octet-stream")); break;
@@ -63,9 +69,19 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	{
 		LToken = ISRestTokenInterface::Execute_GetRestToken(InRequest->Owner.Get());
 	}
+
+	FString LURL = InRequest->DynamicMethod.Len() > 1 ? Endpoint + InRequest->DynamicMethod : Endpoint + InRequest->Method;
+
+	if (InRequest->Type == ESRequestType::VERB_GET || InRequest->Type == ESRequestType::VERB_HEAD)
+	{
+		LURL.Append(InContent);
+	}
 	
-	LRequest->SetURL(InRequest->bCustomUrl ? InRequest->Method : Endpoint + InRequest->Method);
-	LRequest->SetContentAsString(InContent);
+	LRequest->SetURL(LURL);
+	
+	if (InRequest->Type != ESRequestType::VERB_GET && InRequest->Type != ESRequestType::VERB_HEAD)
+		LRequest->SetContentAsString(InContent);
+	
 	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
 	LRequest->OnProcessRequestComplete().BindUObject(this, &USRequestManager::OnRequestCompleted);
 

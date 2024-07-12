@@ -7,13 +7,19 @@
 
 class USRequestManager;
 
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 UENUM(BlueprintType)
 enum class ESRequestType : uint8
 {
-	VGET,
-	VPOST,
-	VPUT,
-	VDELETE,
+	VERB_GET, // The GET method requests a representation of the specified resource. Requests using GET should only retrieve data.
+	VERB_HEAD, // The HEAD method asks for a response identical to a GET request, but without the response body.
+	VERB_POST, // The POST method submits an entity to the specified resource, often causing a change in state or side effects on the server.
+	VERB_PUT, // The PUT method replaces all current representations of the target resource with the request payload.
+	VERB_DELETE, // The DELETE method deletes the specified resource.
+	VERB_CONNECT, // The CONNECT method establishes a tunnel to the server identified by the target resource.
+	VERB_OPTIONS, // The OPTIONS method describes the communication options for the target resource.
+	VERB_TRACE, // The TRACE method performs a message loop-back test along the path to the target resource.
+	VERB_PATCH, // The PATCH method applies partial modifications to a resource.
 	End UMETA(Hidden)
 };
 
@@ -35,7 +41,7 @@ struct SREST_API FSRequest : public TSharedFromThis<FSRequest>
 	ESRequestType						Type;
 	ESRequestContentType				ContentType;
 	FString								Method;
-	bool								bCustomUrl = false;
+	FString								DynamicMethod;
 
 protected:
 
@@ -59,19 +65,26 @@ public:
 	bool Send(const TUStruct& InStruct)
 	{
 		FString LString;
-		if (FJsonObjectConverter::UStructToJsonObjectString(InStruct, LString, 0, 0, 0, nullptr, false))
+
+		if (Type == ESRequestType::VERB_GET)
 		{
+			LString = GetQueryHeaderFromUStruct(TUStruct::StaticStruct(), &InStruct);
 			return Send(LString);
+		}
+		else
+		{
+			if (FJsonObjectConverter::UStructToJsonObjectString(InStruct, LString, 0, 0, 0, nullptr, false))
+			{
+				return Send(LString);
+			}
 		}
 
 		return false;
 	}
 
-	void SetCustomUrl(const FString& InFullUrl)
-	{
-		Method = InFullUrl;
-		bCustomUrl = true;
-	}
+	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
+
+	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);
 	
 	FSHandlerCallback::FOnCallback& BindCallback(const int32& InCode)
 	{
