@@ -96,6 +96,16 @@ public:
 		return StaticCastSharedPtr<FSHandlerCallback>(Handlers.FindChecked(InCode))->OnCallback;
 	}
 
+	FSHandlerRawCallback::FOnCallback& BindRawCallback(const int32& InCode)
+	{
+		if (!Handlers.Contains(InCode))
+		{
+			Handlers.Add(InCode, MakeShareable(new FSHandlerRawCallback()));
+		}
+
+		return StaticCastSharedPtr<FSHandlerRawCallback>(Handlers.FindChecked(InCode))->OnCallback;
+	}
+	
 	FSHandlerStringCallback::FOnCallback& BindStringCallback(const int32& InCode)
 	{
 		if (!Handlers.Contains(InCode))

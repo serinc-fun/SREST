@@ -18,6 +18,28 @@ struct FSHandler
 typedef TSharedPtr<FSHandler> FSHandlerPtr;
 typedef TSharedRef<FSHandler> FSHandlerRef;
 
+struct FSHandlerRawCallback : public FSHandler
+{
+	friend struct FSRequest;
+	
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const TArray<uint8>&);
+
+	virtual bool OnHandle(const TArray<uint8>& InContent) override
+	{
+		if (OnCallback.IsBound())
+		{
+			OnCallback.Broadcast(InContent);
+			return true;
+		}
+
+		return false;
+	}
+
+protected:
+
+	FOnCallback OnCallback;
+};
+
 struct FSHandlerCallback : public FSHandler
 {
 	friend struct FSRequest;
