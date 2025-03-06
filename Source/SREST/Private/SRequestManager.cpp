@@ -28,7 +28,7 @@ FSRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& In
 	return LRequest;
 }
 
-bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString& InContent)
+bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString& InContent, const FName& InId)
 {
 	if (!Requests.Contains(InRequest))
 		return false;
@@ -88,7 +88,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	if (LRequest->ProcessRequest())
 	{
 		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), *InContent);
-		ProcessingRequests.AddUnique({InRequest, LRequest });
+		ProcessingRequests.AddUnique({ InId, InRequest, LRequest });
 		return true;
 	}
 
@@ -141,7 +141,7 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 		if (const auto LFoundHandler = LFoundRequest->RequestPtr->Handlers.Find(LCode))
 		{
 			const auto LRealHandler = (*LFoundHandler);
-			if (!LRealHandler->OnHandle(InResponse->GetContent()))
+			if (!LRealHandler->OnHandle(InResponse->GetContent(), LFoundRequest->Id))
 			{
 				if (LFoundRequest->RequestPtr->Error.IsValid())
 				{

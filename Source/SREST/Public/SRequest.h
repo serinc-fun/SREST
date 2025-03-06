@@ -58,24 +58,24 @@ public:
 	
 	explicit FSRequest(UObject* InOwner);
 	
-	bool Send();
-	bool Send(const FString& InString);
+	bool Send(const FName& InId = NAME_None);
+	bool Send(const FString& InString, const FName& InId = NAME_None);
 
 	template<typename TUStruct>
-	bool Send(const TUStruct& InStruct)
+	bool Send(const TUStruct& InStruct, const FName& InId = NAME_None)
 	{
 		FString LString;
 
 		if (Type == ESRequestType::VERB_GET)
 		{
 			LString = GetQueryHeaderFromUStruct(TUStruct::StaticStruct(), &InStruct);
-			return Send(LString);
+			return Send(LString, InId);
 		}
 		else
 		{
 			if (FJsonObjectConverter::UStructToJsonObjectString(InStruct, LString, 0, 0, 0, nullptr, false))
 			{
-				return Send(LString);
+				return Send(LString, InId);
 			}
 		}
 

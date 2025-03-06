@@ -10,12 +10,13 @@
 
 struct SREST_API FSProcessingRequest
 {
+	FName Id;
 	FSRequestPtr RequestPtr;
 	FHttpRequestPtr SystemRequestPtr;
 
 	bool operator==(const FSProcessingRequest& InR) const
 	{
-		return InR.RequestPtr == RequestPtr && InR.SystemRequestPtr == SystemRequestPtr;
+		return InR.Id == Id && InR.RequestPtr == RequestPtr && InR.SystemRequestPtr == SystemRequestPtr;
 	}
 };
 
@@ -30,7 +31,7 @@ public:
 
 	FSRequestRef CreateRequest(const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET);
 	FSRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET, const ESRequestContentType& InContentType = ESRequestContentType::Json);
-	bool SendRequest(const FSRequestRef& InRequest, const FString& InContent = "");
+	bool SendRequest(const FSRequestRef& InRequest, const FString& InContent = "", const FName& InId = NAME_None);
 
 	UFUNCTION(BlueprintCallable)
 	void SetEndpoint(const FString& InEndpoint);

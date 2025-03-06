@@ -10,7 +10,7 @@
 struct FSHandler
 {
 	virtual      ~FSHandler() = default;
-	virtual bool OnHandle(const TArray<uint8>& InContent) { return false; }
+	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) { return false; }
 
 	static SREST_API FString ConvertContentToString(const TArray<uint8>& InContent);
 };
@@ -22,13 +22,13 @@ struct FSHandlerRawCallback : public FSHandler
 {
 	friend struct FSRequest;
 	
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const TArray<uint8>&);
+	typedef TMulticastDelegate<void(const FName&, const TArray<uint8>&)> FOnCallback;;
 
-	virtual bool OnHandle(const TArray<uint8>& InContent) override
+	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		if (OnCallback.IsBound())
 		{
-			OnCallback.Broadcast(InContent);
+			OnCallback.Broadcast(InId, InContent);
 			return true;
 		}
 
@@ -46,7 +46,7 @@ struct FSHandlerCallback : public FSHandler
 	
 	DECLARE_MULTICAST_DELEGATE(FOnCallback);
 
-	virtual bool OnHandle(const TArray<uint8>& InContent) override
+	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		if (OnCallback.IsBound())
 		{
@@ -68,7 +68,7 @@ struct FSHandlerStringCallback : public FSHandler
 	
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const FString&);
 
-	virtual bool OnHandle(const TArray<uint8>& InContent) override
+	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		if (OnCallback.IsBound())
 		{
@@ -100,7 +100,7 @@ struct TSHandlerUStructCallback : public FSHandler
 	
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const TStruct&);
 
-	virtual bool OnHandle(const TArray<uint8>& InContent) override
+	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		TStruct OutStruct;
 		if (FJsonObjectConverter::JsonObjectStringToUStruct(ConvertContentToString(InContent), &OutStruct))
@@ -127,7 +127,7 @@ struct TSHandlerUStructArrayCallback : public FSHandler
 	
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const TArray<TStruct>&);
 
-	virtual bool OnHandle(const TArray<uint8>& InContent) override
+	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		TArray<TStruct> OutStructArray;
 		if (FJsonObjectConverter::JsonArrayStringToUStruct(ConvertContentToString(InContent), &OutStructArray))

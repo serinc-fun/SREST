@@ -18,21 +18,21 @@ FSRequest::FSRequest(UObject* InOwner)
 	Owner = InOwner;
 }
 
-bool FSRequest::Send()
+bool FSRequest::Send(const FName& InId)
 {
 	if (Manager.IsValid())
 	{
-		return Manager->SendRequest(this->AsShared());
+		return Manager->SendRequest(this->AsShared(), "", InId);
 	}
 
 	return false;
 }
 
-bool FSRequest::Send(const FString& InString)
+bool FSRequest::Send(const FString& InString, const FName& InId)
 {
 	if (Manager.IsValid())
 	{
-		return Manager->SendRequest(this->AsShared(), InString);
+		return Manager->SendRequest(this->AsShared(), InString, InId);
 	}
 
 	return false;
