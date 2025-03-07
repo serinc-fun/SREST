@@ -35,7 +35,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	
 	const bool LIsExist = ProcessingRequests.ContainsByPredicate([&](const FSProcessingRequest& InItem) -> bool
 	{
-		return InItem.RequestPtr == InRequest;
+		return InItem.RequestPtr == InRequest && InItem.Id == InId;
 	});
 
 	if (LIsExist)
