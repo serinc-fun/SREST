@@ -162,7 +162,6 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 		}
 		// ReSharper disable once CppExpressionWithoutSideEffects
 		LFoundRequest->RequestPtr->OnCompleted.ExecuteIfBound();
-	}
-
-	ProcessingRequests.RemoveAll(LLambda);
+		ProcessingRequests.RemoveSingle(*LFoundRequest);
+	}	
 }
