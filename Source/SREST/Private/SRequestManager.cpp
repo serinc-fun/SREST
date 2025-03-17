@@ -33,9 +33,9 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	if (!Requests.Contains(InRequest))
 		return false;
 	
-	const bool LIsExist = ProcessingRequests.ContainsByPredicate([&](const FSProcessingRequest& InItem) -> bool
+	const bool LIsExist = ProcessingRequests.ContainsByPredicate([&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
 	{
-		return InItem.RequestPtr == InRequest && InItem.Id == InId;
+		return InItem->RequestPtr == InRequest && InItem->Id == InId;
 	});
 
 	if (LIsExist)
@@ -88,7 +88,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	if (LRequest->ProcessRequest())
 	{
 		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), *InContent);
-		ProcessingRequests.AddUnique({ InId, InRequest, LRequest });
+		ProcessingRequests.AddUnique(MakeShareable(new FSProcessingRequest { InId, InRequest, LRequest }));
 		return true;
 	}
 
@@ -128,24 +128,26 @@ const FString& USRequestManager::GetTokenHeaderValue() const
 
 void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully)
 {
-	const auto LLambda = [&](const FSProcessingRequest& InItem) -> bool
+	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
 	{
-		return InItem.SystemRequestPtr == InRequest;
+		return InItem->SystemRequestPtr == InRequest;
 	};
 	
 	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
 
-	if (LFoundRequest && LFoundRequest->RequestPtr.IsValid())
+	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
 	{
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
+		
 		const auto LCode = InResponse.IsValid() ? InResponse->GetResponseCode() : -5000;
-		if (const auto LFoundHandler = LFoundRequest->RequestPtr->Handlers.Find(LCode))
+		if (const auto LFoundHandler = LRealRequest->RequestPtr->Handlers.Find(LCode))
 		{
 			const auto LRealHandler = (*LFoundHandler);
-			if (!LRealHandler->OnHandle(InResponse->GetContent(), LFoundRequest->Id))
+			if (!LRealHandler->OnHandle(InResponse->GetContent(), LRealRequest->Id))
 			{
-				if (LFoundRequest->RequestPtr->Error.IsValid())
+				if (LRealRequest->RequestPtr->Error.IsValid())
 				{
-					StaticCastSharedPtr<FSHandlerErrorCallback>(LFoundRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
+					StaticCastSharedPtr<FSHandlerErrorCallback>(LRealRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 				}
 				
 				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
@@ -153,15 +155,15 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 		}
 		else if (InResponse.IsValid())
 		{
-			if (LFoundRequest->RequestPtr->Error.IsValid())
+			if (LRealRequest->RequestPtr->Error.IsValid())
 			{
-				StaticCastSharedPtr<FSHandlerErrorCallback>(LFoundRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
+				StaticCastSharedPtr<FSHandlerErrorCallback>(LRealRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 			}
 			
 			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
 		}
 		// ReSharper disable once CppExpressionWithoutSideEffects
-		LFoundRequest->RequestPtr->OnCompleted.ExecuteIfBound();
+		LRealRequest->RequestPtr->OnCompleted.ExecuteIfBound();
 		ProcessingRequests.RemoveSingle(*LFoundRequest);
 	}	
 }

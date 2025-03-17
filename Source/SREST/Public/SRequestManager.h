@@ -65,7 +65,7 @@ protected:
 	void OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully);
 
 	TArray<FSRequestPtr> Requests;
-	TArray<FSProcessingRequest> ProcessingRequests;
+	TArray<TSharedPtr<FSProcessingRequest>> ProcessingRequests;
 };
 
 
