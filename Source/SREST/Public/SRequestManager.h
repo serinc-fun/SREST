@@ -61,7 +61,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FString TokenValue;
-	
+
+	void OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue);
+	void OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived);
 	void OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully);
 
 	TArray<FSRequestPtr> Requests;

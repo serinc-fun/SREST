@@ -83,16 +83,19 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 		LRequest->SetContentAsString(InContent);
 	
 	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
+	LRequest->OnHeaderReceived().BindUObject(this, &USRequestManager::OnRequestHeader);
+	LRequest->OnRequestProgress64().BindUObject(this, &USRequestManager::OnRequestProgress);
 	LRequest->OnProcessRequestComplete().BindUObject(this, &USRequestManager::OnRequestCompleted);
 
 	if (LRequest->ProcessRequest())
-	{
-		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), *InContent);
+	{		
+		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < 4192 ? *InContent : TEXT("over size for display!"));
+		
 		ProcessingRequests.AddUnique(MakeShareable(new FSProcessingRequest { InId, InRequest, LRequest }));
 		return true;
 	}
 
-	UE_LOG(LogHttp, Error, TEXT("Failed Request: %s, Payload: %s"), *LRequest->GetURL(), *InContent);
+	UE_LOG(LogHttp, Error, TEXT("Failed Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < 4192 ? *InContent : TEXT("over size for display!"));
 	return false;
 }
 
@@ -126,6 +129,36 @@ const FString& USRequestManager::GetTokenHeaderValue() const
 	return TokenValue;
 }
 
+void USRequestManager::OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue)
+{
+	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
+	{
+		return InItem->SystemRequestPtr == InRequest;
+	};
+
+	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
+
+	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
+	{
+		(*LFoundRequest)->RequestPtr->HeaderCallback.Broadcast((*LFoundRequest)->Id, InHeaderName, InHeaderValue);
+	}
+}
+
+void USRequestManager::OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived)
+{
+	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
+	{
+		return InItem->SystemRequestPtr == InRequest;
+	};
+
+	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
+
+	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
+	{
+		(*LFoundRequest)->RequestPtr->ProgressCallback.Broadcast((*LFoundRequest)->Id, InBytesSent, InBytesReceived);
+	}
+}
+
 void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully)
 {
 	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
@@ -150,7 +183,7 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 					StaticCastSharedPtr<FSHandlerErrorCallback>(LRealRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 				}
 				
-				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
+				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < 2048 ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
 			}
 		}
 		else if (InResponse.IsValid())
@@ -160,7 +193,7 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 				StaticCastSharedPtr<FSHandlerErrorCallback>(LRealRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 			}
 			
-			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, *InResponse->GetContentAsString());
+			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < 2048 ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
 		}
 		// ReSharper disable once CppExpressionWithoutSideEffects
 		LRealRequest->RequestPtr->OnCompleted.ExecuteIfBound();

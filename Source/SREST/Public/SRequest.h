@@ -36,6 +36,13 @@ enum class ESRequestContentType : uint8
  */
 struct SREST_API FSRequest : public TSharedFromThis<FSRequest>
 {
+public:
+
+	typedef TMulticastDelegate<void(const FName&, const uint64&, const uint64&)> FOnProgressCallback;
+	typedef TMulticastDelegate<void(const FName&, const FString&, const FString&)> FOnHeaderCallback;
+
+private:
+	
 	friend class USRequestManager;
 	
 	ESRequestType						Type;
@@ -49,12 +56,16 @@ protected:
 	TMap<int32, FSHandlerPtr>			Handlers;
 	TWeakObjectPtr<USRequestManager>	Manager;
 	TWeakObjectPtr<UObject>				Owner;
+	FOnProgressCallback					ProgressCallback;
+	FOnHeaderCallback					HeaderCallback;
 
 private:
 
 	FSRequest();
 	
 public:
+
+	
 	
 	explicit FSRequest(UObject* InOwner);
 	
@@ -85,6 +96,16 @@ public:
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
 	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);
+
+	FOnProgressCallback& BindProgress()
+	{
+		return ProgressCallback;
+	}
+
+	FOnHeaderCallback& BindHeader()
+	{
+		return HeaderCallback;
+	}
 	
 	FSHandlerCallback::FOnCallback& BindCallback(const int32& InCode)
 	{
