@@ -32,6 +32,12 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 {
 	if (!Requests.Contains(InRequest))
 		return false;
+
+	// Clear completed, double solution for correct work
+	ProcessingRequests.RemoveAll([](const TSharedPtr<FSProcessingRequest>& InItem)
+	{
+		return InItem->IsCompleted;
+	});
 	
 	const bool LIsExist = ProcessingRequests.ContainsByPredicate([&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
 	{
@@ -91,7 +97,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	{		
 		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < 4192 ? *InContent : TEXT("over size for display!"));
 		
-		ProcessingRequests.AddUnique(MakeShareable(new FSProcessingRequest { InId, InRequest, LRequest }));
+		ProcessingRequests.AddUnique(MakeShareable(new FSProcessingRequest { InId, InRequest, LRequest, false }));
 		return true;
 	}
 
@@ -165,8 +171,11 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 	{
 		return InItem->SystemRequestPtr == InRequest;
 	};
+
+	if (!ProcessingRequests.ContainsByPredicate(LLambda))
+		return;
 	
-	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
+	auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
 
 	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
 	{
@@ -197,6 +206,11 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 		}
 		// ReSharper disable once CppExpressionWithoutSideEffects
 		LRealRequest->RequestPtr->OnCompleted.ExecuteIfBound();
+		LRealRequest->IsCompleted = true;
+	}
+
+	if (LFoundRequest)
+	{
 		ProcessingRequests.RemoveSingle(*LFoundRequest);
-	}	
+	}
 }

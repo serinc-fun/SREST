@@ -13,6 +13,7 @@ struct SREST_API FSProcessingRequest
 	FName Id;
 	FSRequestPtr RequestPtr;
 	FHttpRequestPtr SystemRequestPtr;
+	bool IsCompleted = false;
 
 	bool operator==(const FSProcessingRequest& InR) const
 	{
