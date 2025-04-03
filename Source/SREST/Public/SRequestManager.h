@@ -33,7 +33,8 @@ public:
 	FSRequestRef CreateRequest(const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET);
 	FSRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET, const ESRequestContentType& InContentType = ESRequestContentType::Json);
 	bool SendRequest(const FSRequestRef& InRequest, const FString& InContent = "", const FName& InId = NAME_None);
-
+	void CancelRequest(const FSRequestRef& InRequest, const FName& InId);
+	
 	UFUNCTION(BlueprintCallable)
 	void SetEndpoint(const FString& InEndpoint);
 	

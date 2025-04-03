@@ -38,6 +38,14 @@ bool FSRequest::Send(const FString& InString, const FName& InId)
 	return false;
 }
 
+void FSRequest::Cancel(const FName& InId)
+{
+	if (Manager.IsValid())
+	{
+		return Manager->CancelRequest(this->AsShared(), InId);
+	}
+}
+
 FString FSRequest::GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const
 {
 	bool bFirst = true;

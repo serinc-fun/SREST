@@ -93,6 +93,8 @@ public:
 		return false;
 	}
 
+	void Cancel(const FName& InId = NAME_None);
+
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
 	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);

@@ -105,6 +105,23 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	return false;
 }
 
+void USRequestManager::CancelRequest(const FSRequestRef& InRequest, const FName& InId)
+{
+	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
+	{
+		return InItem->RequestPtr == InRequest && InItem->Id == InId;
+	};
+
+	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
+
+	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
+	{
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
+		LRealRequest->IsCompleted = true;
+		LRealRequest->SystemRequestPtr->CancelRequest();
+	}
+}
+
 void USRequestManager::SetEndpoint(const FString& InEndpoint)
 {
 	Endpoint = InEndpoint;
@@ -146,7 +163,8 @@ void USRequestManager::OnRequestHeader(FHttpRequestPtr InRequest, const FString&
 
 	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
 	{
-		(*LFoundRequest)->RequestPtr->HeaderCallback.Broadcast((*LFoundRequest)->Id, InHeaderName, InHeaderValue);
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
+		LRealRequest->RequestPtr->HeaderCallback.Broadcast((*LFoundRequest)->Id, InHeaderName, InHeaderValue);
 	}
 }
 
@@ -161,7 +179,8 @@ void USRequestManager::OnRequestProgress(FHttpRequestPtr InRequest, uint64 InByt
 
 	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
 	{
-		(*LFoundRequest)->RequestPtr->ProgressCallback.Broadcast((*LFoundRequest)->Id, InBytesSent, InBytesReceived);
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
+		LRealRequest->RequestPtr->ProgressCallback.Broadcast((*LFoundRequest)->Id, InBytesSent, InBytesReceived);
 	}
 }
 
