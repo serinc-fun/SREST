@@ -36,11 +36,6 @@ enum class ESRequestContentType : uint8
  */
 struct SREST_API FSRequest : public TSharedFromThis<FSRequest>
 {
-public:
-
-	typedef TMulticastDelegate<void(const FName&, const uint64&, const uint64&)> FOnProgressCallback;
-	typedef TMulticastDelegate<void(const FName&, const FString&, const FString&)> FOnHeaderCallback;
-
 private:
 	
 	friend class USRequestManager;
@@ -56,8 +51,6 @@ protected:
 	TMap<int32, FSHandlerPtr>			Handlers;
 	TWeakObjectPtr<USRequestManager>	Manager;
 	TWeakObjectPtr<UObject>				Owner;
-	FOnProgressCallback					ProgressCallback;
-	FOnHeaderCallback					HeaderCallback;
 
 private:
 
@@ -98,16 +91,6 @@ public:
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
 	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);
-
-	FOnProgressCallback& BindProgress()
-	{
-		return ProgressCallback;
-	}
-
-	FOnHeaderCallback& BindHeader()
-	{
-		return HeaderCallback;
-	}
 	
 	FSHandlerCallback::FOnCallback& BindCallback(const int32& InCode)
 	{
@@ -127,6 +110,26 @@ public:
 		}
 
 		return StaticCastSharedPtr<FSHandlerRawCallback>(Handlers.FindChecked(InCode))->OnCallback;
+	}
+
+	FSHandlerDownloadCallback::FOnProgressCallback& BindDownloadProgressCallback(const int32& InCode)
+	{
+		if (!Handlers.Contains(InCode))
+		{
+			Handlers.Add(InCode, MakeShareable(new FSHandlerDownloadCallback()));
+		}
+
+		return StaticCastSharedPtr<FSHandlerDownloadCallback>(Handlers.FindChecked(InCode))->OnProgressCallback;
+	}
+
+	FSHandlerDownloadCallback::FOnCompletedCallback& BindDownloadCompletedCallback(const int32& InCode)
+	{
+		if (!Handlers.Contains(InCode))
+		{
+			Handlers.Add(InCode, MakeShareable(new FSHandlerDownloadCallback()));
+		}
+
+		return StaticCastSharedPtr<FSHandlerDownloadCallback>(Handlers.FindChecked(InCode))->OnCompletedCallback;
 	}
 	
 	FSHandlerStringCallback::FOnCallback& BindStringCallback(const int32& InCode)
@@ -170,8 +173,6 @@ public:
 
 		return StaticCastSharedPtr<FSHandlerErrorCallback>(Error)->OnCallback;
 	}
-
-	FSimpleDelegate OnCompleted;
 };
 
 typedef TSharedPtr<FSRequest> FSRequestPtr;

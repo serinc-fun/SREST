@@ -89,7 +89,9 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 		LRequest->SetContentAsString(InContent);
 	
 	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
+	
 	LRequest->OnHeaderReceived().BindUObject(this, &USRequestManager::OnRequestHeader);
+	LRequest->OnStatusCodeReceived().BindUObject(this, &USRequestManager::OnRequestCode);
 	LRequest->OnRequestProgress64().BindUObject(this, &USRequestManager::OnRequestProgress);
 	LRequest->OnProcessRequestComplete().BindUObject(this, &USRequestManager::OnRequestCompleted);
 
@@ -152,53 +154,53 @@ const FString& USRequestManager::GetTokenHeaderValue() const
 	return TokenValue;
 }
 
+void USRequestManager::OnRequestCode(FHttpRequestPtr InRequest, int32 InStatusCode)
+{
+	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
+	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
+	{
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest.ToSharedRef();
+		LRealRequest->Code = InStatusCode;		
+	}
+}
+
 void USRequestManager::OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue)
 {
-	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
+	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
+	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
 	{
-		return InItem->SystemRequestPtr == InRequest;
-	};
-
-	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
-
-	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
-	{
-		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
-		LRealRequest->RequestPtr->HeaderCallback.Broadcast((*LFoundRequest)->Id, InHeaderName, InHeaderValue);
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest.ToSharedRef();
+		if (const auto LFoundHandler = LRealRequest->RequestPtr->Handlers.Find(LRealRequest->Code))
+		{
+			const auto LRealHandler = (*LFoundHandler);
+			LRealHandler->OnHeader(InHeaderName, InHeaderValue, LRealRequest->Id);
+		}
 	}
 }
 
 void USRequestManager::OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived)
 {
-	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
+	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
+	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
 	{
-		return InItem->SystemRequestPtr == InRequest;
-	};
-
-	const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
-
-	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
-	{
-		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
-		LRealRequest->RequestPtr->ProgressCallback.Broadcast((*LFoundRequest)->Id, InBytesSent, InBytesReceived);
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest.ToSharedRef();
+		if (const auto LFoundHandler = LRealRequest->RequestPtr->Handlers.Find(LRealRequest->Code))
+		{
+			const auto LRealHandler = (*LFoundHandler);
+			LRealHandler->OnProgress(InBytesSent, InBytesReceived, LRealRequest->Id);
+		}
 	}
 }
 
 void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully)
 {
-	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
-	{
-		return InItem->SystemRequestPtr == InRequest;
-	};
-
-	if (!ProcessingRequests.ContainsByPredicate(LLambda))
+	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
+	if (!LFoundRequest.IsValid())
 		return;
-	
-	auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda);
 
-	if (LFoundRequest && (*LFoundRequest)->RequestPtr.IsValid())
+	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
 	{
-		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest->ToSharedRef();
+		const TSharedRef<FSProcessingRequest> LRealRequest = LFoundRequest.ToSharedRef();
 		
 		const auto LCode = InResponse.IsValid() ? InResponse->GetResponseCode() : -5000;
 		if (const auto LFoundHandler = LRealRequest->RequestPtr->Handlers.Find(LCode))
@@ -223,13 +225,24 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 			
 			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < 2048 ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
 		}
-		// ReSharper disable once CppExpressionWithoutSideEffects
-		LRealRequest->RequestPtr->OnCompleted.ExecuteIfBound();
+		
 		LRealRequest->IsCompleted = true;
 	}
 
-	if (LFoundRequest)
+	if (LFoundRequest.IsValid())
 	{
-		ProcessingRequests.RemoveSingle(*LFoundRequest);
+		ProcessingRequests.RemoveSingle(LFoundRequest);
 	}
+}
+
+TSharedPtr<FSProcessingRequest> USRequestManager::GetRequestDataBySystemRequest(FHttpRequestRef InSystemRequest) const
+{
+	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
+	{
+		return InItem->SystemRequestPtr == InSystemRequest;
+	};
+	
+	if (const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda))
+		return *LFoundRequest;
+	return nullptr;
 }

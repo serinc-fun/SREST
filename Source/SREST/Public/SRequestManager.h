@@ -14,6 +14,7 @@ struct SREST_API FSProcessingRequest
 	FSRequestPtr RequestPtr;
 	FHttpRequestPtr SystemRequestPtr;
 	bool IsCompleted = false;
+	int32 Code = INDEX_NONE;
 
 	bool operator==(const FSProcessingRequest& InR) const
 	{
@@ -64,10 +65,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FString TokenValue;
 
+	void OnRequestCode(FHttpRequestPtr InRequest, int32 InStatusCode);
 	void OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue);
 	void OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived);
 	void OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully);
 
+	TSharedPtr<FSProcessingRequest> GetRequestDataBySystemRequest(FHttpRequestRef InSystemRequest) const;
+	
 	TArray<FSRequestPtr> Requests;
 	TArray<TSharedPtr<FSProcessingRequest>> ProcessingRequests;
 };
