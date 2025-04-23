@@ -4,33 +4,33 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "SRequestsContainer.generated.h"
+#include "SBaseRequestsHandler.generated.h"
 
-class USRequestManager;
+class USRequestsProcessor;
 /**
  * 
  */
 UCLASS()
-class SREST_API USRequestsContainer : public UObject
+class SREST_API USBaseRequestsHandler : public UObject
 {
 	GENERATED_BODY()
 
 public:
 
-	USRequestsContainer();
+	USBaseRequestsHandler();
 
 	UFUNCTION(BlueprintCallable)
-	void Setup(USRequestManager* InRequestManager);
+	void Setup(USRequestsProcessor* InRequestManager);
 
 protected:
 
 	virtual void PostInitProperties() override;
 	
 	UFUNCTION(BlueprintNativeEvent)
-	void OnSetup(USRequestManager* InRequestManager);
+	void OnSetup(USRequestsProcessor* InRequestManager);
 	
 	UPROPERTY(Transient)
-	USRequestManager* RequestManager;
+	USRequestsProcessor* RequestManager;
 
 	UPROPERTY(EditDefaultsOnly, Category = Configuration)
 	bool bUseInternalManager = false;

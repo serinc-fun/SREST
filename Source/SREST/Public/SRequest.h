@@ -5,7 +5,7 @@
 #include "SHandler.h"
 #include "SRequest.generated.h"
 
-class USRequestManager;
+class USRequestsProcessor;
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 UENUM(BlueprintType)
@@ -38,7 +38,7 @@ struct SREST_API FSRequest : public TSharedFromThis<FSRequest>
 {
 private:
 	
-	friend class USRequestManager;
+	friend class USRequestsProcessor;
 	
 	ESRequestType						Type;
 	ESRequestContentType				ContentType;
@@ -49,7 +49,7 @@ protected:
 
 	FSHandlerPtr						Error;
 	TMap<int32, FSHandlerPtr>			Handlers;
-	TWeakObjectPtr<USRequestManager>	Manager;
+	TWeakObjectPtr<USRequestsProcessor>	Manager;
 	TWeakObjectPtr<UObject>				Owner;
 
 private:

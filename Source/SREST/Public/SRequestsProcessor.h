@@ -6,7 +6,7 @@
 #include "UObject/Object.h"
 #include "Interfaces/IHttpRequest.h"
 #include "SRestTokenInterface.h"
-#include "SRequestManager.generated.h"
+#include "SRequestsProcessor.generated.h"
 
 struct SREST_API FSProcessingRequest
 {
@@ -23,13 +23,13 @@ struct SREST_API FSProcessingRequest
 };
 
 UCLASS()
-class SREST_API USRequestManager : public UObject
+class SREST_API USRequestsProcessor : public UObject
 {
 	GENERATED_BODY()
 
 public:
 
-	USRequestManager();
+	USRequestsProcessor();
 
 	FSRequestRef CreateRequest(const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET);
 	FSRequestRef CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType = ESRequestType::VERB_GET, const ESRequestContentType& InContentType = ESRequestContentType::Json);

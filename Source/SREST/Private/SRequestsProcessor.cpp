@@ -1,5 +1,5 @@
 ﻿// Copyright Serinc All Rights Reserved.
-#include "SRequestManager.h"
+#include "SRequestsProcessor.h"
 
 #include "SHandler.h"
 #include "SRestTokenInterface.h"
@@ -7,17 +7,17 @@
 #include "HttpModule.h"
 #include "Interfaces/IHttpResponse.h"
 
-USRequestManager::USRequestManager()
+USRequestsProcessor::USRequestsProcessor()
 {
 	
 }
 
-FSRequestRef USRequestManager::CreateRequest(const FString& InMethod, const ESRequestType& InType)
+FSRequestRef USRequestsProcessor::CreateRequest(const FString& InMethod, const ESRequestType& InType)
 {
 	return CreateRequest(GetOuter(), InMethod, InType);
 }
 
-FSRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType/* = ESRequestType::VGET*/, const ESRequestContentType& InContentType/* = ESRequestContentType::Json*/)
+FSRequestRef USRequestsProcessor::CreateRequest(UObject* InOwner, const FString& InMethod, const ESRequestType& InType/* = ESRequestType::VGET*/, const ESRequestContentType& InContentType/* = ESRequestContentType::Json*/)
 {
 	FSRequestRef LRequest = MakeShareable(new FSRequest(InOwner));
 	LRequest->Type = InType;
@@ -28,7 +28,7 @@ FSRequestRef USRequestManager::CreateRequest(UObject* InOwner, const FString& In
 	return LRequest;
 }
 
-bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString& InContent, const FName& InId)
+bool USRequestsProcessor::SendRequest(const FSRequestRef& InRequest, const FString& InContent, const FName& InId)
 {
 	if (!Requests.Contains(InRequest))
 		return false;
@@ -90,10 +90,10 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	
 	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
 	
-	LRequest->OnHeaderReceived().BindUObject(this, &USRequestManager::OnRequestHeader);
-	LRequest->OnStatusCodeReceived().BindUObject(this, &USRequestManager::OnRequestCode);
-	LRequest->OnRequestProgress64().BindUObject(this, &USRequestManager::OnRequestProgress);
-	LRequest->OnProcessRequestComplete().BindUObject(this, &USRequestManager::OnRequestCompleted);
+	LRequest->OnHeaderReceived().BindUObject(this, &USRequestsProcessor::OnRequestHeader);
+	LRequest->OnStatusCodeReceived().BindUObject(this, &USRequestsProcessor::OnRequestCode);
+	LRequest->OnRequestProgress64().BindUObject(this, &USRequestsProcessor::OnRequestProgress);
+	LRequest->OnProcessRequestComplete().BindUObject(this, &USRequestsProcessor::OnRequestCompleted);
 
 	if (LRequest->ProcessRequest())
 	{		
@@ -107,7 +107,7 @@ bool USRequestManager::SendRequest(const FSRequestRef& InRequest, const FString&
 	return false;
 }
 
-void USRequestManager::CancelRequest(const FSRequestRef& InRequest, const FName& InId)
+void USRequestsProcessor::CancelRequest(const FSRequestRef& InRequest, const FName& InId)
 {
 	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
 	{
@@ -124,37 +124,37 @@ void USRequestManager::CancelRequest(const FSRequestRef& InRequest, const FName&
 	}
 }
 
-void USRequestManager::SetEndpoint(const FString& InEndpoint)
+void USRequestsProcessor::SetEndpoint(const FString& InEndpoint)
 {
 	Endpoint = InEndpoint;
 }
 
-const FString& USRequestManager::GetEndpoint() const
+const FString& USRequestsProcessor::GetEndpoint() const
 {
 	return Endpoint;	
 }
 
-void USRequestManager::SetTokenHeaderName(const FString& InName)
+void USRequestsProcessor::SetTokenHeaderName(const FString& InName)
 {
 	TokenName = InName;
 }
 
-const FString& USRequestManager::GetTokenHeaderName() const
+const FString& USRequestsProcessor::GetTokenHeaderName() const
 {
 	return TokenName;
 }
 
-void USRequestManager::SetTokenHeaderValue(const FString& InValue)
+void USRequestsProcessor::SetTokenHeaderValue(const FString& InValue)
 {
 	TokenValue = InValue;
 }
 
-const FString& USRequestManager::GetTokenHeaderValue() const
+const FString& USRequestsProcessor::GetTokenHeaderValue() const
 {
 	return TokenValue;
 }
 
-void USRequestManager::OnRequestCode(FHttpRequestPtr InRequest, int32 InStatusCode)
+void USRequestsProcessor::OnRequestCode(FHttpRequestPtr InRequest, int32 InStatusCode)
 {
 	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
 	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
@@ -164,7 +164,7 @@ void USRequestManager::OnRequestCode(FHttpRequestPtr InRequest, int32 InStatusCo
 	}
 }
 
-void USRequestManager::OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue)
+void USRequestsProcessor::OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue)
 {
 	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
 	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
@@ -178,7 +178,7 @@ void USRequestManager::OnRequestHeader(FHttpRequestPtr InRequest, const FString&
 	}
 }
 
-void USRequestManager::OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived)
+void USRequestsProcessor::OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived)
 {
 	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
 	if (LFoundRequest.IsValid() && LFoundRequest->RequestPtr.IsValid())
@@ -192,7 +192,7 @@ void USRequestManager::OnRequestProgress(FHttpRequestPtr InRequest, uint64 InByt
 	}
 }
 
-void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully)
+void USRequestsProcessor::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully)
 {
 	auto LFoundRequest = GetRequestDataBySystemRequest(InRequest.ToSharedRef());
 	if (!LFoundRequest.IsValid())
@@ -235,7 +235,7 @@ void USRequestManager::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRespon
 	}
 }
 
-TSharedPtr<FSProcessingRequest> USRequestManager::GetRequestDataBySystemRequest(FHttpRequestRef InSystemRequest) const
+TSharedPtr<FSProcessingRequest> USRequestsProcessor::GetRequestDataBySystemRequest(FHttpRequestRef InSystemRequest) const
 {
 	const auto LLambda = [&](const TSharedPtr<FSProcessingRequest>& InItem) -> bool
 	{

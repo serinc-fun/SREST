@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 
-class USRequestManager;
+class USRequestsProcessor;
 /**
  * 
  */
 struct SREST_API FSResponse 
 {
 	int32								Code;
-	TWeakObjectPtr<USRequestManager>	Manager;
+	TWeakObjectPtr<USRequestsProcessor>	Manager;
 };

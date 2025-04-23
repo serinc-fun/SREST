@@ -2,7 +2,7 @@
 #include "SRequest.h"
 
 #include "Http.h"
-#include "SRequestManager.h"
+#include "SRequestsProcessor.h"
 
 FSRequest::FSRequest()
 	: Type(ESRequestType::End)
