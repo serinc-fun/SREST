@@ -13,28 +13,26 @@ class USRequestsProcessor;
 UCLASS()
 class SREST_API USBaseRequestsHandler : public UObject
 {
+	friend class USRequestsSubsystem;
+	
 	GENERATED_BODY()
 
 public:
 
 	USBaseRequestsHandler();
 
-	UFUNCTION(BlueprintCallable)
-	void Setup(USRequestsProcessor* InRequestManager);
+private:
+	
+	void Setup(USRequestsProcessor* InRequestProcessor);
 
 protected:
-
-	virtual void PostInitProperties() override;
 	
 	UFUNCTION(BlueprintNativeEvent)
-	void OnSetup(USRequestsProcessor* InRequestManager);
+	void OnSetup(USRequestsProcessor* InRequestProcessor);
 	
 	UPROPERTY(Transient)
-	USRequestsProcessor* RequestManager;
-
-	UPROPERTY(EditDefaultsOnly, Category = Configuration)
-	bool bUseInternalManager = false;
+	USRequestsProcessor* RequestProcessor;
 	
 	UPROPERTY(EditDefaultsOnly, Category = Configuration)
-	FString InternalManagerEndpoint;
+	FString CustomEndpoint;
 };

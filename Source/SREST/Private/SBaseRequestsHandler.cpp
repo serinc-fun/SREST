@@ -9,28 +9,17 @@ USBaseRequestsHandler::USBaseRequestsHandler()
 	
 }
 
-void USBaseRequestsHandler::Setup(USRequestsProcessor* InRequestManager)
+void USBaseRequestsHandler::Setup(USRequestsProcessor* InRequestProcessor)
 {
-	if (RequestManager != InRequestManager)
+	if (RequestProcessor != InRequestProcessor)
 	{
-		RequestManager = InRequestManager;
-		OnSetup(RequestManager);
+		RequestProcessor = InRequestProcessor;
+		OnSetup(RequestProcessor);
 	}
 }
 
-void USBaseRequestsHandler::PostInitProperties()
-{
-	UObject::PostInitProperties();
 
-	if (bUseInternalManager)
-	{
-		auto LInternalManager = NewObject<USRequestsProcessor>(this);
-		LInternalManager->SetEndpoint(InternalManagerEndpoint);
-		Setup(LInternalManager);
-	}
-}
-
-void USBaseRequestsHandler::OnSetup_Implementation(USRequestsProcessor* InRequestManager)
+void USBaseRequestsHandler::OnSetup_Implementation(USRequestsProcessor* InRequestProcessor)
 {
 	
 }
