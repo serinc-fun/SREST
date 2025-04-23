@@ -19,31 +19,28 @@ class SREST_API USRequestsSubsystem : public UEngineSubsystem
 public:
 
 	UFUNCTION(BlueprintCallable)
-	USBaseRequestsHandler* AddHandlerByClass(UClass* InClass);
-
-	UFUNCTION(BlueprintCallable)
-	USBaseRequestsHandler* AddHandlerByClassAndEndpoint(UClass* InClass, const FString& InEndpoint);
+	USBaseRequestsHandler* AddHandlerByClass(UClass* InClass, const FString& InEndpoint = "");
 	
 	UFUNCTION(BlueprintPure)
-	USBaseRequestsHandler* GetHandlerByClass(UClass* InClass) const;
+	USBaseRequestsHandler* GetHandlerByClass(UClass* InClass, const FString& InEndpoint = "");
 
 	UFUNCTION(BlueprintCallable)
 	bool RemoveHandlerByClass(UClass* InClass);
 	
 	template<class TClass = USBaseRequestsHandler>
-	TClass* AddHandler(const FString& InEndpoint) const
+	TClass* AddHandler(const FString& InEndpoint = "")
 	{
-		return Cast<TClass>(AddHandlerByClassAndEndpoint(TClass::StaticClass(), InEndpoint));
+		return Cast<TClass>(AddHandlerByClass(TClass::StaticClass(), InEndpoint));
 	}
 
 	template<class TClass = USBaseRequestsHandler>
-	TClass* GetHandler() const
+	TClass* GetHandler(const FString& InEndpoint = "")
 	{
 		return Cast<TClass>(GetHandlerByClass(TClass::StaticClass()));
 	}
 
 	template<class TClass = USBaseRequestsHandler>
-	TClass* RemoveHandler() const
+	TClass* RemoveHandler()
 	{
 		return Cast<TClass>(RemoveHandlerByClass(TClass::StaticClass()));
 	}
@@ -51,8 +48,8 @@ public:
 protected:
 
 	UPROPERTY()
-	TArray<USBaseRequestsHandler*> Handlers;
+	mutable TArray<USBaseRequestsHandler*> Handlers;
 
 	UPROPERTY()
-	TMap<FName, USRequestsProcessor*> Processors;
+	mutable TMap<FName, USRequestsProcessor*> Processors;
 };

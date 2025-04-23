@@ -5,18 +5,8 @@
 #include "SBaseRequestsHandler.h"
 #include "SRequestsProcessor.h"
 
-USBaseRequestsHandler* USRequestsSubsystem::AddHandlerByClass(UClass* InClass)
-{
-	if (auto LFoundHandler = GetHandlerByClass(InClass))
-	{
-		return LFoundHandler;
-	}
 
-	Handlers.Add(NewObject<USBaseRequestsHandler>(this, InClass));
-	return Handlers.Last();
-}
-
-USBaseRequestsHandler* USRequestsSubsystem::AddHandlerByClassAndEndpoint(UClass* InClass, const FString& InEndpoint)
+USBaseRequestsHandler* USRequestsSubsystem::AddHandlerByClass(UClass* InClass, const FString& InEndpoint)
 {
 	USRequestsProcessor* LProcessor = nullptr;
 	if (Processors.Contains(*InEndpoint))
@@ -37,7 +27,7 @@ USBaseRequestsHandler* USRequestsSubsystem::AddHandlerByClassAndEndpoint(UClass*
 	return Handlers.Last();
 }
 
-USBaseRequestsHandler* USRequestsSubsystem::GetHandlerByClass(UClass* InClass) const
+USBaseRequestsHandler* USRequestsSubsystem::GetHandlerByClass(UClass* InClass, const FString& InEndpoint)
 {
 	for (const auto& LHandler : Handlers)
 	{
@@ -47,7 +37,7 @@ USBaseRequestsHandler* USRequestsSubsystem::GetHandlerByClass(UClass* InClass) c
 		}
 	}
 
-	return nullptr;
+	return AddHandlerByClass(InClass, InEndpoint);
 }
 
 bool USRequestsSubsystem::RemoveHandlerByClass(UClass* InClass)
