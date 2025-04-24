@@ -36,7 +36,7 @@ public:
 	template<class TClass = USBaseRequestsHandler>
 	TClass* GetHandler(const FString& InEndpoint = "")
 	{
-		return Cast<TClass>(GetHandlerByClass(TClass::StaticClass()));
+		return Cast<TClass>(GetHandlerByClass(TClass::StaticClass(), InEndpoint));
 	}
 
 	template<class TClass = USBaseRequestsHandler>

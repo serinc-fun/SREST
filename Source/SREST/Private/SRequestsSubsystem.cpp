@@ -22,9 +22,10 @@ USBaseRequestsHandler* USRequestsSubsystem::AddHandlerByClass(UClass* InClass, c
 		Processors.Add(*InEndpoint, LProcessor);
 	}
 
-	Handlers.Add(NewObject<USBaseRequestsHandler>(this, InClass));
-	Handlers.Last()->Setup(LProcessor);
-	return Handlers.Last();
+	auto LNewHandler = NewObject<USBaseRequestsHandler>(this, InClass);
+	Handlers.Add(LNewHandler);
+	LNewHandler->Setup(LProcessor);
+	return LNewHandler;
 }
 
 USBaseRequestsHandler* USRequestsSubsystem::GetHandlerByClass(UClass* InClass, const FString& InEndpoint)
