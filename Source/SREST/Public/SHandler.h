@@ -100,17 +100,18 @@ protected:
 	FOnCallback OnCallback;
 };
 
+template<bool TUseId = false>
 struct FSHandlerCallback : public FSHandler
 {
 	friend struct FSRequest;
 	
-	DECLARE_MULTICAST_DELEGATE(FOnCallback);
+	using FOnCallback = std::conditional_t<TUseId, TMulticastDelegate<void(const FName&)>, TMulticastDelegate<void()>>;
 
 	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		if (OnCallback.IsBound())
 		{
-			OnCallback.Broadcast();
+			OnHandleImpl(InId, std::integral_constant<bool, TUseId>{});
 			return true;
 		}
 
@@ -119,20 +120,31 @@ struct FSHandlerCallback : public FSHandler
 
 protected:
 
+	void OnHandleImpl(const FName&, std::false_type)
+	{
+		OnCallback.Broadcast();
+	}
+
+	void OnHandleImpl( const FName& InId, std::true_type)
+	{
+		OnCallback.Broadcast(InId);
+	}
+	
 	FOnCallback OnCallback;
 };
 
+template<bool TUseId = false>
 struct FSHandlerStringCallback : public FSHandler
 {
 	friend struct FSRequest;
 	
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const FString&);
+	using FOnCallback = std::conditional_t<TUseId, TMulticastDelegate<void(const FName&, const FString&)>, TMulticastDelegate<void(const FString&)>>;
 
 	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
 		if (OnCallback.IsBound())
 		{
-			OnCallback.Broadcast(ConvertContentToString(InContent));
+			OnCallback.Broadcast(ConvertContentToString(InContent), InId, std::integral_constant<bool, TUseId>{});
 			return true;
 		}
 
@@ -141,6 +153,16 @@ struct FSHandlerStringCallback : public FSHandler
 
 protected:
 
+	void OnHandleImpl(const FString& InContent, const FName&, std::false_type)
+	{
+		OnCallback.Broadcast(InContent);
+	}
+
+	void OnHandleImpl(const FString& InContent, const FName& InId, std::true_type)
+	{
+		OnCallback.Broadcast(InId, InContent);
+	}
+	
 	FOnCallback OnCallback;
 };
 
@@ -153,12 +175,12 @@ struct FSHandlerErrorCallback : public FSHandler
 	FOnCallback OnCallback;
 };
 
-template<typename TStruct>
+template<typename TStruct, bool TUseId = false>
 struct TSHandlerUStructCallback : public FSHandler
 {
 	friend struct FSRequest;
-	
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const TStruct&);
+
+	using FOnCallback = std::conditional_t<TUseId, TMulticastDelegate<void(const FName&, const TStruct&)>, TMulticastDelegate<void(const TStruct&)>>;
 
 	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
@@ -167,7 +189,7 @@ struct TSHandlerUStructCallback : public FSHandler
 		{
 			if (OnCallback.IsBound())
 			{
-				OnCallback.Broadcast(OutStruct);
+				OnHandleImpl(OutStruct, InId, std::integral_constant<bool, TUseId>{});				
 				return true;
 			}
 		}
@@ -177,15 +199,25 @@ struct TSHandlerUStructCallback : public FSHandler
 
 protected:
 
+	void OnHandleImpl(const TStruct& InContent, const FName&, std::false_type)
+	{
+		OnCallback.Broadcast(InContent);
+	}
+
+	void OnHandleImpl(const TStruct& InContent, const FName& InId, std::true_type)
+	{
+		OnCallback.Broadcast(InId, InContent);
+	}
+	
 	FOnCallback OnCallback;
 };
 
-template<typename TStruct>
+template<typename TStruct, bool TUseId = false>
 struct TSHandlerUStructArrayCallback : public FSHandler
 {
 	friend struct FSRequest;
 	
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCallback, const TArray<TStruct>&);
+	typedef TMulticastDelegate<void(const TArray<TStruct>&)> FOnCallback;
 
 	virtual bool OnHandle(const TArray<uint8>& InContent, const FName& InId = NAME_None) override
 	{
@@ -194,7 +226,7 @@ struct TSHandlerUStructArrayCallback : public FSHandler
 		{
 			if (OnCallback.IsBound())
 			{
-				OnCallback.Broadcast(OutStructArray);
+				OnHandleImpl(OutStructArray, InId, std::integral_constant<bool, TUseId>{});
 				return true;
 			}
 		}
@@ -204,5 +236,15 @@ struct TSHandlerUStructArrayCallback : public FSHandler
 
 protected:
 
+	void OnHandleImpl(const TArray<TStruct>& InContent, const FName&, std::false_type)
+	{
+		OnCallback.Broadcast(InContent);
+	}
+
+	void OnHandleImpl(const TArray<TStruct>& InContent, const FName& InId, std::true_type)
+	{
+		OnCallback.Broadcast(InId, InContent);
+	}
+	
 	FOnCallback OnCallback;
 };

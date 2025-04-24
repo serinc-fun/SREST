@@ -91,15 +91,16 @@ public:
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
 	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);
-	
-	FSHandlerCallback::FOnCallback& BindCallback(const int32& InCode)
+
+	template<bool TUseId = false>
+	typename FSHandlerCallback<TUseId>::FOnCallback& BindCallback(const int32& InCode)
 	{
 		if (!Handlers.Contains(InCode))
 		{
-			Handlers.Add(InCode, MakeShareable(new FSHandlerCallback()));
+			Handlers.Add(InCode, MakeShareable(new FSHandlerCallback<TUseId>()));
 		}
 
-		return StaticCastSharedPtr<FSHandlerCallback>(Handlers.FindChecked(InCode))->OnCallback;
+		return StaticCastSharedPtr<FSHandlerCallback<TUseId>>(Handlers.FindChecked(InCode))->OnCallback;
 	}
 
 	FSHandlerRawCallback::FOnCallback& BindRawCallback(const int32& InCode)
@@ -131,37 +132,38 @@ public:
 
 		return StaticCastSharedPtr<FSHandlerDownloadCallback>(Handlers.FindChecked(InCode))->OnCompletedCallback;
 	}
-	
-	FSHandlerStringCallback::FOnCallback& BindStringCallback(const int32& InCode)
+
+	template<bool TUseId = false>
+	typename FSHandlerStringCallback<TUseId>::FOnCallback& BindStringCallback(const int32& InCode)
 	{
 		if (!Handlers.Contains(InCode))
 		{
-			Handlers.Add(InCode, MakeShareable(new FSHandlerStringCallback()));
+			Handlers.Add(InCode, MakeShareable(new FSHandlerStringCallback<TUseId>()));
 		}
 
-		return StaticCastSharedPtr<FSHandlerStringCallback>(Handlers.FindChecked(InCode))->OnCallback;
+		return StaticCastSharedPtr<FSHandlerStringCallback<TUseId>>(Handlers.FindChecked(InCode))->OnCallback;
 	}
 
-	template<typename TUStruct>
-	typename TSHandlerUStructCallback<TUStruct>::FOnCallback& BindUStructCallback(const int32& InCode)
+	template<typename TUStruct, bool TUseId = false>
+	typename TSHandlerUStructCallback<TUStruct, TUseId>::FOnCallback& BindUStructCallback(const int32& InCode)
 	{
 		if (!Handlers.Contains(InCode))
 		{
-			Handlers.Add(InCode, MakeShareable(new TSHandlerUStructCallback<TUStruct>()));
+			Handlers.Add(InCode, MakeShareable(new TSHandlerUStructCallback<TUStruct, TUseId>()));
 		}
 
-		return StaticCastSharedPtr<TSHandlerUStructCallback<TUStruct>>(Handlers.FindChecked(InCode))->OnCallback;
+		return StaticCastSharedPtr<TSHandlerUStructCallback<TUStruct, TUseId>>(Handlers.FindChecked(InCode))->OnCallback;
 	}
 
-	template<typename TUStruct>
-	typename TSHandlerUStructArrayCallback<TUStruct>::FOnCallback& BindUStructArrayCallback(const int32& InCode)
+	template<typename TUStruct, bool TUseId = false>
+	typename TSHandlerUStructArrayCallback<TUStruct, TUseId>::FOnCallback& BindUStructArrayCallback(const int32& InCode)
 	{
 		if (!Handlers.Contains(InCode))
 		{
-			Handlers.Add(InCode, MakeShareable(new TSHandlerUStructArrayCallback<TUStruct>()));
+			Handlers.Add(InCode, MakeShareable(new TSHandlerUStructArrayCallback<TUStruct, TUseId>()));
 		}
 
-		return StaticCastSharedPtr<TSHandlerUStructArrayCallback<TUStruct>>(Handlers.FindChecked(InCode))->OnCallback;
+		return StaticCastSharedPtr<TSHandlerUStructArrayCallback<TUStruct, TUseId>>(Handlers.FindChecked(InCode))->OnCallback;
 	}
 
 	FSHandlerErrorCallback::FOnCallback& BindErrorCallback()
