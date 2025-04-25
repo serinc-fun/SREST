@@ -5,6 +5,7 @@
 #include "SRestTokenInterface.h"
 #include "Http.h"
 #include "HttpModule.h"
+#include "SSettings.h"
 #include "Interfaces/IHttpResponse.h"
 
 USRequestsProcessor::USRequestsProcessor()
@@ -97,13 +98,13 @@ bool USRequestsProcessor::SendRequest(const FSRequestRef& InRequest, const FStri
 
 	if (LRequest->ProcessRequest())
 	{		
-		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < 4192 ? *InContent : TEXT("over size for display!"));
+		UE_LOG(LogHttp, Warning, TEXT("Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < Settings->GetContentLenghtForDisplaySend() ? *InContent : TEXT("over size for display!"));
 		
 		ProcessingRequests.AddUnique(MakeShareable(new FSProcessingRequest { InId, InRequest, LRequest, false }));
 		return true;
 	}
 
-	UE_LOG(LogHttp, Error, TEXT("Failed Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < 4192 ? *InContent : TEXT("over size for display!"));
+	UE_LOG(LogHttp, Error, TEXT("Failed Request: %s, Payload: %s"), *LRequest->GetURL(), InContent.Len() < Settings->GetContentLenghtForDisplaySend() ? *InContent : TEXT("over size for display!"));
 	return false;
 }
 
@@ -213,7 +214,7 @@ void USRequestsProcessor::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRes
 					StaticCastSharedPtr<FSHandlerErrorCallback>(LRealRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 				}
 				
-				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < 2048 ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
+				UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < Settings->GetContentLenghtForDisplayCompleted() ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
 			}
 		}
 		else if (InResponse.IsValid())
@@ -223,7 +224,7 @@ void USRequestsProcessor::OnRequestCompleted(FHttpRequestPtr InRequest, FHttpRes
 				StaticCastSharedPtr<FSHandlerErrorCallback>(LRealRequest->RequestPtr->Error)->OnCallback.Broadcast(LCode, InResponse->GetContentAsString());
 			}
 			
-			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < 2048 ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
+			UE_LOG(LogHttp, Warning, TEXT("Error: %d, Payload: %s"), LCode, InResponse->GetContentLength() < Settings->GetContentLenghtForDisplayCompleted() ? *InResponse->GetContentAsString() : TEXT("over size for display!"));
 		}
 		
 		LRealRequest->IsCompleted = true;
@@ -245,4 +246,11 @@ TSharedPtr<FSProcessingRequest> USRequestsProcessor::GetRequestDataBySystemReque
 	if (const auto LFoundRequest = ProcessingRequests.FindByPredicate(LLambda))
 		return *LFoundRequest;
 	return nullptr;
+}
+
+void USRequestsProcessor::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	Settings = USSettings::GetSettings();
 }

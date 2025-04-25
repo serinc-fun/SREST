@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "Interfaces/IHttpRequest.h"
 #include "SRestTokenInterface.h"
+#include "SSettings.h"
 #include "SRequestsProcessor.generated.h"
 
 struct SREST_API FSProcessingRequest
@@ -65,12 +66,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FString TokenValue;
 
+	UPROPERTY()
+	USSettings* Settings	;
+
 	void OnRequestCode(FHttpRequestPtr InRequest, int32 InStatusCode);
 	void OnRequestHeader(FHttpRequestPtr InRequest, const FString& InHeaderName, const FString& InHeaderValue);
 	void OnRequestProgress(FHttpRequestPtr InRequest, uint64 InBytesSent, uint64 InBytesReceived);
 	void OnRequestCompleted(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bConnectedSuccessfully);
 
 	TSharedPtr<FSProcessingRequest> GetRequestDataBySystemRequest(FHttpRequestRef InSystemRequest) const;
+
+	virtual void PostInitProperties() override;
 	
 	TArray<FSRequestPtr> Requests;
 	TArray<TSharedPtr<FSProcessingRequest>> ProcessingRequests;
