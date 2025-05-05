@@ -30,9 +30,14 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void OnSetup(USRequestsProcessor* InRequestProcessor);
 	
-	UPROPERTY(Transient)
-	USRequestsProcessor* RequestProcessor;
-	
 	UPROPERTY(EditDefaultsOnly, Category = Configuration)
 	FString CustomEndpoint;
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE USRequestsProcessor* GetProcessor() const { return RequestProcessor; }
+
+private:
+
+	UPROPERTY(Transient)
+	USRequestsProcessor* RequestProcessor;
 };
