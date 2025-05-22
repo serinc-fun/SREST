@@ -14,7 +14,7 @@ void USBaseRequestsHandler::Setup(USRequestsProcessor* InRequestProcessor)
 	if (RequestProcessor != InRequestProcessor)
 	{
 		RequestProcessor = InRequestProcessor;
-		OnSetup(RequestProcessor);
+		OnSetup_Implementation(RequestProcessor);
 	}
 }
 

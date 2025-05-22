@@ -7,7 +7,7 @@ public class SRESTEditor : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                
+                "SREST"
             }
         );
 
@@ -20,7 +20,7 @@ public class SRESTEditor : ModuleRules
                 "SlateCore",
                 "UnrealEd",
                 "PropertyEditor", 
-                "SREST",
+                "SREST", "TalentCore", "TalentCoreEditor", "JsonUtilities", "TalentUtilities"
             }
         );
     }
