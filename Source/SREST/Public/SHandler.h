@@ -144,7 +144,7 @@ struct FSHandlerStringCallback : public FSHandler
 	{
 		if (OnCallback.IsBound())
 		{
-			OnCallback.Broadcast(ConvertContentToString(InContent), InId, std::integral_constant<bool, TUseId>{});
+			OnCallback.Broadcast(ConvertContentToString(InContent));//, InId, std::integral_constant<bool, TUseId>{});
 			return true;
 		}
 
