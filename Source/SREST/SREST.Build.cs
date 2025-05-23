@@ -39,7 +39,7 @@ public class SREST : ModuleRules
 			new string[]
 			{
 				"CoreUObject",
-				"Engine",
+				"Engine", "TalentUtilities",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
