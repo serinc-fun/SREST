@@ -20,7 +20,8 @@ public class SRESTEditor : ModuleRules
                 "SlateCore",
                 "UnrealEd",
                 "PropertyEditor", 
-                "SREST", "TalentCore", "TalentCoreEditor", "JsonUtilities", "TalentUtilities"
+                "SREST", "TalentCore", "TalentCoreEditor", "JsonUtilities", "TalentUtilities",
+                "DeveloperSettings"
             }
         );
     }

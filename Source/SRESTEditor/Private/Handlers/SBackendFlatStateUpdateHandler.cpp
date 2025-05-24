@@ -1,35 +1,29 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include ".//Handlers/SBackendFlatStateUpdate.h"
+#include ".//Handlers/SBackendFlatStateUpdateHandler.h"
 
 #include "SRequestsProcessor.h"
 #include "Async/TUFuture.h"
 #include "Async/Letters/TCFutureLetter.h"
 #include "TalentCore/API/TCAPITypes.h"
 #include "TalentCore/Utilities/TCBaseConfig.h"
-#include "Utilities/Handlers/TCBackendFlatStateUpdateConfig.h"
+#include "SBackendFlatStateUpdateSettings.h"
 
-void USBackendFlatStateUpdate::OnSetup_Implementation(USRequestsProcessor* InRequestProcessor)
+void USBackendFlatStateUpdateHandler::OnSetup_Implementation(USRequestsProcessor* InRequestProcessor)
 {
 	Super::OnSetup_Implementation(InRequestProcessor);
 	
-	const auto LConfig = UTCBaseConfig::GetMutableConfig<UTCBackendFlatStateUpdateConfig>();
+	const auto LConfig = UTCBaseConfig::GetMutableConfig<USBackendFlatStateUpdateSettings>();
 
 	if (IsValid(LConfig))
 	{
-		CustomEndpoint = LConfig->UploadMethod;
+		CustomEndpoint = LConfig->EndPointBase + LConfig->UploadMethod;
 		IDName = LConfig->RequestIDName;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("%hs() failed - no configuration found"), __func__);
-		CustomEndpoint = "construction/projects/import";
-		IDName = FName("BackendFlatStateUpdate");
 	}
 }
 
-UTUFuture* USBackendFlatStateUpdate::UploadToBackend(FTCEditorProjectData InData)
+UTUFuture* USBackendFlatStateUpdateHandler::UploadToBackend(FTCEditorProjectData InData)
 {
 	Promise = NewObject<UTUPromise>();
 	Promise->AddToRoot();
@@ -40,11 +34,10 @@ UTUFuture* USBackendFlatStateUpdate::UploadToBackend(FTCEditorProjectData InData
 	{
 		FSRequestRef LRequest = GetProcessor()->CreateRequest(CustomEndpoint, ESRequestType::VERB_POST);
 
-		LRequest->BindStringCallback(200).AddUObject(this, &USBackendFlatStateUpdate::StringReturnTEST);
-		LRequest->BindErrorCallback().AddUObject(this, &USBackendFlatStateUpdate::ErrorStringReturnTEST);
+		LRequest->BindStringCallback(200).AddUObject(this, &USBackendFlatStateUpdateHandler::StringReturnTEST);
+		LRequest->BindErrorCallback().AddUObject(this, &USBackendFlatStateUpdateHandler::ErrorStringReturnTEST);
 		
 		LRequest->Send(InData, IDName);
-		return Promise->GetFuture();
 	}
 
 
@@ -52,7 +45,7 @@ UTUFuture* USBackendFlatStateUpdate::UploadToBackend(FTCEditorProjectData InData
 	return Promise->GetFuture();
 }
 
-void USBackendFlatStateUpdate::StringReturnTEST(const FString& InString)
+void USBackendFlatStateUpdateHandler::StringReturnTEST(const FString& InString)
 {
 	if (IsValid(Promise))
 	{
@@ -69,7 +62,7 @@ void USBackendFlatStateUpdate::StringReturnTEST(const FString& InString)
 	}
 }
 
-void USBackendFlatStateUpdate::ErrorStringReturnTEST(const int32& InCode, const FString& InString)
+void USBackendFlatStateUpdateHandler::ErrorStringReturnTEST(const int32& InCode, const FString& InString)
 {
 	if (IsValid(Promise))
 	{
@@ -77,7 +70,7 @@ void USBackendFlatStateUpdate::ErrorStringReturnTEST(const int32& InCode, const 
 		LLetter->Code = InCode;
 		LLetter->Message = InString;
 
-		UE_LOG(LogTemp, Error, TEXT("USBackendFlatStateUpdate : %s"), *InString);
+		UE_LOG(LogTemp, Error, TEXT("USBackendFlatStateUpdateHandler : %s"), *InString);
 
 		Promise->Resolve(LLetter);
 		Promise->RemoveFromRoot();

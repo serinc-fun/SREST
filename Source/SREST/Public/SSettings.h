@@ -31,6 +31,17 @@ public:
 	int32 GetContentLenghtForDisplayCompleted() const { return ContentLenghtForDisplayCompleted; }
 	int32 GetContentLenghtForDisplaySend() const { return ContentLenghtForDisplaySending; }
 	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Config, Category = "Handler")
+	FString EndPointBase = "https://public.talent.ttt-ne.su/api/";
+
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Config, Category = "Handler")
+	FString AppProjectID = "";
+	
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Config, Category = "Handler")
+	FString EditorProjectID = "";
+	
 protected:
 	/**
 	 * Content length for display. Only for completed request
@@ -43,5 +54,6 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Config, Category = "Logs")
 	int32 ContentLenghtForDisplaySending = 4192;
+	
 	
 };

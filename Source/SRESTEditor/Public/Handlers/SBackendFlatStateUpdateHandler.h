@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SBaseRequestsHandler.h"
-#include "SBackendFlatStateUpdate.generated.h"
+#include "SBackendFlatStateUpdateHandler.generated.h"
 
 class UTUPromise;
 struct FTCEditorProjectData;
@@ -13,7 +13,7 @@ class UTUFuture;
  * 
  */
 UCLASS(Blueprintable)
-class SRESTEDITOR_API USBackendFlatStateUpdate : public USBaseRequestsHandler
+class SRESTEDITOR_API USBackendFlatStateUpdateHandler : public USBaseRequestsHandler
 {
 	GENERATED_BODY()
 	
