@@ -6,7 +6,7 @@
 #include "SRequestsProcessor.h"
 #include "SRequest.h"
 #include "Async/TUFuture.h"
-#include "Async/Letters/TCFutureLetter.h"
+#include "Async/Letters/TUFlatStateFutureLetter.h"
 
 UTUFuture* USFlatsInfoHandler::GetFlatsInfo(const FString& InID, const int& InBuildingNumber, const int& InEntranceNumber, const int& InFloorNumber)
 {
@@ -19,7 +19,7 @@ UTUFuture* USFlatsInfoHandler::GetFlatsInfo(const FString& InID, const int& InBu
 	{
 		FSRequestRef LRequest = GetProcessor()->CreateRequest(CustomEndpoint, ESRequestType::VERB_GET);
 
-		LRequest->BindStringCallback(200).AddUObject(this, &USFlatsInfoHandler::ReturnFlatsInfo);
+		LRequest->BindUStructCallback<FFlatsInfoEntries>(200).AddUObject(this, &USFlatsInfoHandler::ReturnFlatsInfoStruct);
 		LRequest->BindErrorCallback().AddUObject(this, &USFlatsInfoHandler::ErrorStringReturn);
 		
 		FString LData = "?ProjectID=" + InID + "&BuildingNumber=" + FString::FromInt(InBuildingNumber) + "&EntranceNumber=" + FString::FromInt(InEntranceNumber)
@@ -32,14 +32,13 @@ UTUFuture* USFlatsInfoHandler::GetFlatsInfo(const FString& InID, const int& InBu
 	return Promise->GetFuture();
 }
 
-
-void USFlatsInfoHandler::ReturnFlatsInfo(const FString& InString) const
+void USFlatsInfoHandler::ReturnFlatsInfoStruct(const FFlatsInfoEntries& InInfo) const
 {
 	if (IsValid(Promise))
 	{
-		UTUFutureLetter* LLetter = NewObject<UTUFutureLetter>();
+		UTUFlatStateFutureLetter* LLetter = NewObject<UTUFlatStateFutureLetter>();
 		LLetter->Code = 200;
-		LLetter->Message = InString;
+		LLetter->Info = InInfo;
 
 		Promise->Resolve(LLetter);
 		Promise->RemoveFromRoot();
@@ -54,7 +53,7 @@ void USFlatsInfoHandler::ErrorStringReturn(const int32& InCode, const FString& I
 {
 	if (IsValid(Promise))
 	{
-		UTUFutureLetter* LLetter = NewObject<UTUFutureLetter>();
+		UTUFlatStateFutureLetter* LLetter = NewObject<UTUFlatStateFutureLetter>();
 		LLetter->Code = InCode;
 		LLetter->Message = InString;
 

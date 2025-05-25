@@ -6,11 +6,13 @@
 #include "SBaseRequestsHandler.h"
 #include "SFlatsInfoHandler.generated.h"
 
+struct FFlatsInfoEntries;
 class UTUPromise;
 class UTUFuture;
 /**
  * 
  */
+
 UCLASS(Blueprintable)
 class SREST_API USFlatsInfoHandler : public USBaseRequestsHandler
 {
@@ -21,8 +23,8 @@ class SREST_API USFlatsInfoHandler : public USBaseRequestsHandler
 
 
 protected:
-
-	void ReturnFlatsInfo(const FString& InID) const;
+	
+	void ReturnFlatsInfoStruct(const FFlatsInfoEntries& InInfo) const;
 	
 	void ErrorStringReturn(const int32& InCode, const FString& InString) const;
 
