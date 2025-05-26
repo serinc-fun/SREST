@@ -23,7 +23,9 @@ class SREST_API USFlatsInfoHandler : public USBaseRequestsHandler
 
 
 protected:
-	
+
+	void ProcessComplete(FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bInSuccessful) override;
+
 	void ReturnFlatsInfoStruct(const FFlatsInfoEntries& InInfo) const;
 	
 	void ErrorStringReturn(const int32& InCode, const FString& InString) const;
