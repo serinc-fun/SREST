@@ -58,7 +58,7 @@ void USFlatsInfoHandler::ProcessComplete(FHttpRequestPtr InRequest, FHttpRespons
 		{
 			UTUFlatStateFutureLetter* LLetter = NewObject<UTUFlatStateFutureLetter>();
 			LLetter->Code = 400;
-			LLetter->Message = "Error Convert, but code is " + InResponse->GetResponseCode();
+			LLetter->Message = "Error Convert, but code is " + FString::FromInt( InResponse->GetResponseCode());
 
 			Promise->Resolve(LLetter);
 			Promise->RemoveFromRoot();
