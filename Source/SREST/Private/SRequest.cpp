@@ -111,14 +111,23 @@ void FSRequest::GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* S
 		
 		FString LName = LProperty->GetAuthoredName();
 
-		const void* LValue = LProperty->ContainerPtrToValuePtr<uint8>(Struct);		
-		if (FStructProperty* LStructProperty = CastField<FStructProperty>(LProperty))
+		const void* LValue = LProperty->ContainerPtrToValuePtr<uint8>(Struct);
+		if (!GetQueryHeaderFromUStructPart(InOutString, LProperty, LValue, InBaseName))
 		{
-			GetQueryHeaderFromUStruct(InOutString, LStructProperty->GetOwnerStruct(), Struct, InBaseName + LName + TEXT("."));
-		}
-		else
-		{
-			GetQueryHeaderFromUStructPart(InOutString, LProperty, LValue);
+			if (FStructProperty* LStructProperty = CastField<FStructProperty>(LProperty))
+			{
+				FString LValueString;
+				LStructProperty->ExportTextItem_Direct(LValueString, LValue, nullptr, nullptr, PPF_None);
+
+				if (!LValueString.IsEmpty() && LValueString.Find(TEXT("(")) != 0 && LValueString.Find(TEXT(")")) != LValueString.Len() - 1)
+				{
+					InOutString.Append(*FString::Printf(TEXT("%s%s=%s"), *InBaseName, *LStructProperty->GetAuthoredName(), *LValueString));
+				}
+				else
+				{
+					GetQueryHeaderFromUStruct(InOutString, LStructProperty->Struct, Struct, InBaseName + LName + TEXT("."));
+				}
+			}
 		}
 
 		bFirst = false;
