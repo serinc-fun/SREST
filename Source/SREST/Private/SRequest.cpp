@@ -46,16 +46,60 @@ void FSRequest::Cancel(const FName& InId)
 	}
 }
 
-FString FSRequest::GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const
+bool FSRequest::GetQueryHeaderFromUStructPart(FString& InOutString, FProperty* InProperty, const void* InValue, const FString& InBaseName) const
+{
+	// Copy from ConvertScalarFPropertyToJsonValue method from JsonObjectConverter and modifed
+	if (FEnumProperty* LEnumProperty = CastField<FEnumProperty>(InProperty))
+	{
+		const auto LTypedValue = LEnumProperty->GetUnderlyingProperty()->GetSignedIntPropertyValue(InValue);
+		InOutString.Append(*FString::Printf(TEXT("%s%s=%lld"), *InBaseName, *InProperty->GetAuthoredName(), LTypedValue));
+		return true;
+	}
+	else if (FNumericProperty *LNumericProperty = CastField<FNumericProperty>(InProperty))
+	{
+		if (LNumericProperty->IsFloatingPoint())
+		{
+			const auto LTypedValue = LNumericProperty->GetFloatingPointPropertyValue(InValue);
+			InOutString.Append(*FString::Printf(TEXT("%s%s=%.6f"), *InBaseName, *InProperty->GetAuthoredName(), LTypedValue));
+		}
+		else if (LNumericProperty->IsInteger())
+		{
+			const auto LTypedValue = LNumericProperty->GetSignedIntPropertyValue(InValue);
+			InOutString.Append(*FString::Printf(TEXT("%s%s=%lld"), *InBaseName, *InProperty->GetAuthoredName(), LTypedValue));
+		}
+		return true;
+	}
+	else if (FBoolProperty *LBoolProperty = CastField<FBoolProperty>(InProperty))
+	{
+		const auto LTypedValue = LBoolProperty->GetPropertyValue(InValue);
+		InOutString.Append(*FString::Printf(TEXT("%s%s=%hhd"), *InBaseName, *InProperty->GetAuthoredName(), LTypedValue));
+		return true;
+	}
+	else if (FStrProperty *LStringProperty = CastField<FStrProperty>(InProperty))
+	{
+		const auto LTypedValue = LStringProperty->GetPropertyValue(InValue);
+		InOutString.Append(*FString::Printf(TEXT("%s%s=%s"), *InBaseName, *InProperty->GetAuthoredName(), *LTypedValue));
+		return true;
+	}
+	else if (FTextProperty *LTextProperty = CastField<FTextProperty>(InProperty))
+	{
+		const auto LTypedValue = LTextProperty->GetPropertyValue(InValue).ToString();
+		InOutString.Append(*FString::Printf(TEXT("%s%s=%s"), *InBaseName, *InProperty->GetAuthoredName(), *LTypedValue));
+		return true;
+	}
+
+	return false;
+}
+
+void FSRequest::GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* StructDefinition, const void* Struct, const FString& InBaseName) const
 {
 	bool bFirst = true;
-	FString LRequest = TEXT("?");
 	
 	for (TFieldIterator<FProperty> It(StructDefinition); It; ++It)
 	{
 		if (!bFirst)
 		{
-			LRequest.Append(TEXT("&"));
+			InOutString.Append(TEXT("&"));
 		}
 		
 		FProperty* LProperty = *It;
@@ -67,45 +111,26 @@ FString FSRequest::GetQueryHeaderFromUStruct(const UStruct* StructDefinition, co
 		
 		FString LName = LProperty->GetAuthoredName();
 
-		const void* LValue = LProperty->ContainerPtrToValuePtr<uint8>(Struct);
-
-		// Copy from ConvertScalarFPropertyToJsonValue method from JsonObjectConverter and modifed
-		if (FEnumProperty* LEnumProperty = CastField<FEnumProperty>(LProperty))
+		const void* LValue = LProperty->ContainerPtrToValuePtr<uint8>(Struct);		
+		if (FStructProperty* LStructProperty = CastField<FStructProperty>(LProperty))
 		{
-			const auto LTypedValue = LEnumProperty->GetUnderlyingProperty()->GetSignedIntPropertyValue(LValue);
-			LRequest.Append(*FString::Printf(TEXT("%s=%lld"), *LName, LTypedValue));
+			GetQueryHeaderFromUStruct(InOutString, LStructProperty->GetOwnerStruct(), Struct, InBaseName + LName + TEXT("."));
 		}
-		else if (FNumericProperty *LNumericProperty = CastField<FNumericProperty>(LProperty))
+		else
 		{
-			if (LNumericProperty->IsFloatingPoint())
-			{
-				const auto LTypedValue = LNumericProperty->GetFloatingPointPropertyValue(LValue);
-				LRequest.Append(*FString::Printf(TEXT("%s=%.6f"), *LName, LTypedValue));
-			}
-			else if (LNumericProperty->IsInteger())
-			{
-				const auto LTypedValue = LNumericProperty->GetSignedIntPropertyValue(LValue);
-				LRequest.Append(*FString::Printf(TEXT("%s=%lld"), *LName, LTypedValue));
-			}
-		}
-		else if (FBoolProperty *LBoolProperty = CastField<FBoolProperty>(LProperty))
-		{
-			const auto LTypedValue = LBoolProperty->GetPropertyValue(LValue);
-			LRequest.Append(*FString::Printf(TEXT("%s=%hhd"), *LName, LTypedValue));
-		}
-		else if (FStrProperty *LStringProperty = CastField<FStrProperty>(LProperty))
-		{
-			const auto LTypedValue = LStringProperty->GetPropertyValue(LValue);
-			LRequest.Append(*FString::Printf(TEXT("%s=%s"), *LName, *LTypedValue));
-		}
-		else if (FTextProperty *LTextProperty = CastField<FTextProperty>(LProperty))
-		{
-			const auto LTypedValue = LTextProperty->GetPropertyValue(LValue).ToString();
-			LRequest.Append(*FString::Printf(TEXT("%s=%s"), *LName, *LTypedValue));
+			GetQueryHeaderFromUStructPart(InOutString, LProperty, LValue);
 		}
 
 		bFirst = false;
 	}
+}
+
+FString FSRequest::GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const
+{
+	bool bFirst = true;
+	FString LRequest = TEXT("?");
+
+	GetQueryHeaderFromUStruct(LRequest, StructDefinition, Struct);
 
 	return LRequest;
 }

@@ -10,7 +10,7 @@ class USRequestsProcessor;
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class SREST_API USBaseRequestsHandler : public UObject
 {
 	friend class USRequestsSubsystem;

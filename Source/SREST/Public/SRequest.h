@@ -88,6 +88,8 @@ public:
 
 	void Cancel(const FName& InId = NAME_None);
 
+	bool GetQueryHeaderFromUStructPart(FString& InOutString, FProperty* InProperty, const void* InValue, const FString& InBaseName = TEXT("")) const;
+	void GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* StructDefinition, const void* Struct, const FString& InBaseName = TEXT("")) const;
 	FString GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const;
 
 	void SetDynamicMethodArgs(const FStringFormatNamedArguments& InArguments);
