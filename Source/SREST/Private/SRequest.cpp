@@ -125,7 +125,7 @@ void FSRequest::GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* S
 				}
 				else
 				{
-					GetQueryHeaderFromUStruct(InOutString, LStructProperty->Struct, Struct, InBaseName + LName + TEXT("."));
+					GetQueryHeaderFromUStruct(InOutString, LStructProperty->Struct, LValue, InBaseName + LName + TEXT("."));
 				}
 			}
 		}
