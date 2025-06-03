@@ -3,6 +3,7 @@
 
 #include "Http.h"
 #include "SRequestsProcessor.h"
+#include "UObject/PropertyOptional.h"
 
 FSRequest::FSRequest()
 	: Type(ESRequestType::End)
@@ -96,12 +97,7 @@ void FSRequest::GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* S
 	bool bFirst = true;
 	
 	for (TFieldIterator<FProperty> It(StructDefinition); It; ++It)
-	{
-		if (!bFirst)
-		{
-			InOutString.Append(TEXT("&"));
-		}
-		
+	{	
 		FProperty* LProperty = *It;
 		if (LProperty->ArrayDim > 1)
 		{
@@ -112,6 +108,22 @@ void FSRequest::GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* S
 		FString LName = LProperty->GetAuthoredName();
 
 		const void* LValue = LProperty->ContainerPtrToValuePtr<uint8>(Struct);
+		if (FOptionalProperty* LOptionalProperty = CastField<FOptionalProperty>(*It))
+		{
+			if (!LOptionalProperty->IsSet(LOptionalProperty->ContainerPtrToValuePtr<void>(Struct)))
+			{
+				continue;
+			}
+
+			LProperty = LOptionalProperty->GetValueProperty();
+			//LValue = LProperty->ContainerPtrToValuePtr<uint8>(LProperty);
+		}
+		
+		if (!bFirst)
+		{
+			InOutString.Append(TEXT("&"));
+		}
+		
 		if (!GetQueryHeaderFromUStructPart(InOutString, LProperty, LValue, InBaseName))
 		{
 			if (FStructProperty* LStructProperty = CastField<FStructProperty>(LProperty))
@@ -136,7 +148,6 @@ void FSRequest::GetQueryHeaderFromUStruct(FString& InOutString, const UStruct* S
 
 FString FSRequest::GetQueryHeaderFromUStruct(const UStruct* StructDefinition, const void* Struct) const
 {
-	bool bFirst = true;
 	FString LRequest = TEXT("?");
 
 	GetQueryHeaderFromUStruct(LRequest, StructDefinition, Struct);
