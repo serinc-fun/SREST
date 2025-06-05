@@ -88,8 +88,9 @@ bool USRequestsProcessor::SendRequest(const FSRequestRef& InRequest, const FStri
 	
 	if (InRequest->Type != ESRequestType::VERB_GET && InRequest->Type != ESRequestType::VERB_HEAD)
 		LRequest->SetContentAsString(InContent);
-	
-	LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
+
+	if (!TokenName.IsEmpty())
+		LRequest->SetHeader(TokenName, LToken.Len() > 5 ? LToken : TokenValue);
 	
 	LRequest->OnHeaderReceived().BindUObject(this, &USRequestsProcessor::OnRequestHeader);
 	LRequest->OnStatusCodeReceived().BindUObject(this, &USRequestsProcessor::OnRequestCode);
